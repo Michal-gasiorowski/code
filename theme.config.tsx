@@ -5,15 +5,15 @@ import styles from "#styles/sidebar.module.css";
 
 const config: DocsThemeConfig = {
   logo: <span>Frontend concepts</span>,
-  // project: {
-  //   link: 'https://github.com/shuding/nextra-docs-template',
-  // },
+  project: {
+    link: "https://github.com/Michal-gasiorowski/code",
+  },
   // chat: {
   //   link: 'https://discord.com',
   // },
-  // docsRepositoryBase: 'https://github.com/shuding/nextra-docs-template',
+  docsRepositoryBase: "https://github.com/Michal-gasiorowski/code/tree/main",
   footer: {
-    text: "Nextra Docs Template",
+    text: "Frontend concepts by Michał Gąsiorowski (c) 2023. Template under the MIT license, https://nextra.site/",
   },
 
   sidebar: {
