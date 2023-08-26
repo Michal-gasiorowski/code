@@ -1,4 +1,3 @@
-import AppWrapper from "#components/AppWrapper";
 import { useRouter } from "next/router";
 
 const router = useRouter();
