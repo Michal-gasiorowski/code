@@ -67,6 +67,7 @@ const config: DocsThemeConfig = {
   search: {
     placeholder: "Szukaj...",
     loading: "Ładowanie...",
+    component: null,
   },
 };
 

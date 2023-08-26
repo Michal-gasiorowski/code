@@ -1,21 +1,41 @@
-import { useRouter } from "next/router";
+import { createContext, useContext, useState } from "react";
 
-const router = useRouter();
-const query = router.query.myQuery;
-// query: string | string[]
+import { AppWrapper } from "#components";
 
-function manipulateQuery(query: string): string;
-function manipulateQuery(query: string[]): string[];
-function manipulateQuery(query: string | string[]): string | string[];
+export const ParentContext = createContext({ count: 0 });
 
-function manipulateQuery(query: any): any {
-  if (typeof query === "string") return query.toUpperCase();
-  return query.map((querry) => querry.toUpperCase());
-}
+export const ShowCount = () => {
+  const { count } = useContext(ParentContext);
+  return <div>count: {count}</div>;
+};
 
-const manipulatedQuery = manipulateQuery(query);
-// manipulatedQuery: string | string[]
-const manipulatedQuery2 = manipulateQuery("foo");
-// manipulatedQuery2: string
-const manipulatedQuery3 = manipulateQuery(["foo", "bar"]);
-// manipulatedQuery3: string[]
+export const AddTwo = () => {
+  const { count } = useContext(ParentContext);
+  return <div>count plus two: {count + 2}</div>;
+};
+
+export const ParentComponent = ({ children }) => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <ParentContext.Provider value={{ count }}>
+      {children}
+      <button onClick={() => setCount((state) => state + 1)}>Add one</button>
+    </ParentContext.Provider>
+  );
+};
+
+ParentComponent.AddTwo = AddTwo;
+ParentComponent.ShowCount = ShowCount;
+
+export const Parent = ParentComponent;
+
+export const Wrapper = () => (
+  <Parent>
+    <Parent.ShowCount />
+  </Parent>
+);
+
+<AppWrapper>
+  <Wrapper />
+</AppWrapper>;

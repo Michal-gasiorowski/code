@@ -1,0 +1,77 @@
+# Compound components
+
+This is design pattern that allows you to create components that share state and logic without having to use a higher order component or render props. At the same time, it allows you to have a lot of flexibility in how you render the component.
+
+## Implementation
+
+```jsx filename="CompoundComponents.tsx" copy
+import { createContext, useContext, useState } from "react";
+
+const ParentContext = createContext({ count: 0 });
+
+const ParentComponent = ({ children }) => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <ParentContext.Provider value={{ count }}>
+      {children}
+      <button onClick={() => setCount((state) => state + 1)}>Add one</button>
+    </ParentContext.Provider>
+  );
+};
+
+const ShowCount = () => {
+  const { count } = ParentComponent.useContext();
+  return <div>count: {count}</div>;
+};
+
+const AddTwo = () => {
+  const { count } = ParentComponent.useContext();
+  return <div>count plus two: {count + 2}</div>;
+};
+
+ParentComponent.AddTwo = AddTwo;
+ParentComponent.ShowCount = ShowCount;
+ParentComponent.useContext = () => useContext(ParentContext);
+
+export const Parent = ParentComponent;
+```
+
+## Usage
+
+```jsx
+import { Parent } from "#components";
+
+<div>
+  <Parent>
+    <Parent.ShowCount />
+    <Parent.AddTwo />
+    <div style={{ background: "yellow" }}>
+      <Parent.ShowCount />
+    </div>
+  </Parent>
+</div>;
+```
+
+import { Callout } from "nextra/components";
+
+<Callout emoji="💡">
+  As you can see, you can reuse the same child component in differnet order,
+  context and multiple times. Also we exported all components that works
+  together as a single component just for convenience.
+</Callout>
+
+## Demo
+
+import { Parent } from "#components/_examples/CompoundComponents";
+import { AppWrapper } from "#AppWrapper";
+
+<AppWrapper>
+  <Parent>
+    <Parent.ShowCount />
+    <Parent.AddTwo />
+    <div style={{ background: "yellow" }}>
+      <Parent.ShowCount />
+    </div>
+  </Parent>
+</AppWrapper>
