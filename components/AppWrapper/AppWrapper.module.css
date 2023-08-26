@@ -1,0 +1,30 @@
+.wrapper {
+    background: rgba(199, 166, 0, 0.10);
+    padding: 20px;
+    margin-top: 10px;
+    border-radius: 15px;
+}
+
+.logWrapper {
+    background: rgba(199, 166, 0, 0.10);
+    padding: 20px;
+    margin-top: 10px;
+    border-radius: 15px;
+}
+
+.logHeading {
+    display: flex;
+    justify-content: space-between;
+}
+
+.logEntry {
+    font-size: 0.8rem;
+}
+
+.codeWrapper {
+    margin-top: 10px;
+    max-height: 150px;
+    height: 150px;
+    overflow-y: scroll;
+    background: white;
+}

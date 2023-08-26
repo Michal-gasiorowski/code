@@ -1,0 +1,153 @@
+# Function Currying
+
+Technika programistyczna polegająca na przekształceniu funkcji przyjmującej wiele argumentów na sekwencję funkcji przyjmujących jeden bądź więcej argumentów.
+
+## Definiowanie
+
+```js filename="example.js" {5} copy
+const normalFunction = (arg1, arg2) => {
+  return [arg1, arg2];
+};
+
+const curryingFunction = (arg1) => (arg2) => {
+  return [arg1, arg2];
+};
+```
+
+## Wywoływanie
+
+```js filename="example.js" {3} copy
+normalFunction("foo", "bar"); //zwraca ["foo", "bar"]
+
+curryingFunction("foo")("bar"); //zwraca ["foo", "bar"]
+```
+
+## Zastosowanie
+
+Wyobraźmy sobie przykład innej funkcji, której przekażemy inną funkcję jako argument:
+
+```js filename="example.js" copy
+const functionWithCallback = (callback) => {
+  const internalValue = "internal";
+  return callback(internalValue);
+};
+```
+
+W takim przypadku, aby przekazać do funkcji callback, który wykorzysta `internalValue` jako jeden z argumentów, musimy posłużyć się następującą konstrukcją:
+
+```js filename="example.js" copy
+functionWithCallback((internal) => normalFunction("external", internal));
+// zwraca ['external', 'internal']
+```
+
+Jeśli zamiast tego posłużymy się naszą `curryingFunction`, nie musimy tworzyć nowej funkcji strzałkowej: zamiast tego przekazuyjemy call całej funkcji, który zostanie zwrócony przez callback:
+
+```js filename="example.js" copy
+functionWithCallback(curryingFunction("external"));
+// zwraca ['external', 'internal']
+```
+
+## Przykład 1
+
+Typowym przykładem zastosowania takiej konstrukcji, moze być przekazywanie funkcji do propsa onChange w komponentach reactowych:
+
+```js filename="myComponent.js" {9, 14, 23, 28} copy
+import { useState } from "react";
+import { Input } from "#components/input/input";
+
+export const MyComponent = () => {
+  const [normalState, setNormalState] = useState("");
+  const [curryingState, setCurryingState] = useState("");
+  const [lastUsedField, setLastUsedField] = useState("none");
+
+  const onChangeHandler = (event, field) => {
+    setNormalState(event.target.value);
+    setLastUsedField(field);
+  };
+
+  const curryingOnChangeHandler = (field) => (event) => {
+    setCurryingState(event.target.value);
+    setLastUsedField(field);
+  };
+
+  return (
+    <div>
+      <Input
+        value={normalState}
+        onChange={(event) => onChangeHandler(event, "normal")}
+        label="normal"
+      />
+      <Input
+        value={curryingState}
+        onChange={curryingOnChangeHandler("currying")}
+        label="currying"
+      />
+      <p>Ostatnio użyte pole: {lastUsedField}</p>
+    </div>
+  );
+};
+```
+
+### Demo
+
+import { useState } from "react";
+import { Input } from "#components/input/input";
+import { AppWrapper } from "#AppWrapper" 
+
+export const MyComponent = () => {
+const [normalState, setNormalState] = useState("");
+const [curryingState, setCurryingState] = useState("");
+const [lastUsedField, setLastUsedField] = useState("none");
+
+const onChangeHandler = (event, field) => {
+setNormalState(event.target.value);
+setLastUsedField(field);
+};
+
+const curryingOnChangeHandler = (field) => (event) => {
+setCurryingState(event.target.value);
+setLastUsedField(field);
+};
+
+return (
+
+<>
+  <Input
+    value={normalState}
+    onChange={(event) => onChangeHandler(event, "normal")}
+    label="normal"
+  />
+  <Input
+    value={curryingState}
+    onChange={curryingOnChangeHandler("currying")}
+    label="currying"
+  />
+  <p>Ostatnio użyte pole: {lastUsedField}</p>
+</>
+
+)}
+
+<AppWrapper>
+  <MyComponent />
+</AppWrapper>
+
+## Przykład 2
+
+Innym przykładem może być przekazywanie funkcji do obiektów, które posiadają własne metody:
+
+```js filename="myObj.js" {13} copy
+const myObj = {
+  internalContext: "context",
+  test: function (callback) {
+    callback(this.internalContext);
+  },
+};
+
+testWithInternalContext = (valueToTest) => (context) => {
+  console.log(valueToTest, context);
+};
+
+//oba przykłady zwrócą "foo context"
+myObj.test(testWithInternalContext("foo"));
+myObj.test((context) => testWithInternalContext("foo")(context));
+```

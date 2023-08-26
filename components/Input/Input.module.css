@@ -1,0 +1,11 @@
+.input {
+    border: 1px solid black;
+    width: 150px;
+}
+
+.container {
+    padding: 5px;
+    display: flex;
+    justify-content: space-between;
+    width: 250px;
+}

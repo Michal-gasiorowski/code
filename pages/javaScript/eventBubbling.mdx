@@ -1,0 +1,131 @@
+# Event Bubbling
+
+Wywołanie eventu na elemencie rodzica wywołuje eventy na wszystkich elementach potomnych. W poniższym przykładzie, kliknięcie na element `p` wywoła eventy na elementach `p`, `div` i `form`.
+
+## Demo
+
+```js filename="EventBubbling.js" copy
+export const MyComponent = () => {
+  const style = {
+    border: "1px solid black",
+    margin: "10px",
+  };
+
+  const handleClick = (element) => (event) => {
+    console.log(`${element} tagname: ${event.target.tagName}`);
+  };
+
+  return (
+    <form style={style} onClick={handleClick("form")}>
+      FORM
+      <div style={style} onClick={handleClick("div")}>
+        DIV
+        <p style={style} onClick={handleClick("p")}>
+          P
+        </p>
+      </div>
+    </form>
+  );
+};
+```
+
+import { AppWrapper } from "#AppWrapper";
+
+export const MyComponent = () => {
+    const style = {
+        border: "1px solid black",
+    margin: "10px",
+  };
+
+const {log} = AppWrapper.useContext();
+
+const handleClick = (element) => (event) => {
+log(`${element} tagname: ${event.target.tagName}`);
+};
+
+return (
+
+<form style={style} onClick={handleClick("form")}>
+  FORM
+  <div style={style} onClick={handleClick("div")}>
+    DIV
+    <p style={style} onClick={handleClick("p")}>
+      P
+    </p>
+  </div>
+</form>
+
+); };
+
+<AppWrapper log>
+  <MyComponent />
+</AppWrapper>
+;
+
+import { Callout } from "nextra/components";
+
+<Callout type="info" emoji="ℹ️">
+  Klikając na elementy w powyższym przykładzie, możemy zauważyć, że niezależnie
+  od tego ile eventów jest wywoływanych, **`event.target`** zawsze wskazuje na
+  element, który został kliknięty.
+</Callout>
+
+## Zatrzymanie bąbelkowania
+
+Użycie metody `stopPropagation` na evencie zatrzymuje bąbelkowanie eventu. W poniższym przykładzie, kliknięcie na element `p` wywoła event tylko na elemencie `p`.
+
+```js filename="EventBubbling.js" {9} copy
+export const MyComponent = () => {
+  const style = {
+    border: "1px solid black",
+    margin: "10px",
+  };
+
+  const handleClick = (element) => (event) => {
+    console.log(element);
+    event.stopPropagation();
+  };
+
+  return (
+    <form style={style} onClick={handleClick("form")}>
+      FORM
+      <div style={style} onClick={handleClick("div")}>
+        DIV
+        <p style={style} onClick={handleClick("p")}>
+          P
+        </p>
+      </div>
+    </form>
+  );
+};
+```
+
+export const MyComponent2 = () => {
+  const style = {
+    border: "1px solid black",
+    margin: "10px",
+  };
+
+const {log} = AppWrapper.useContext();
+const handleClick = (element) => (event) => {
+log(element);
+event.stopPropagation();
+};
+
+return (
+
+<form style={style} onClick={handleClick("form")}>
+  FORM
+  <div style={style} onClick={handleClick("div")}>
+    DIV
+    <p style={style} onClick={handleClick("p")}>
+      P
+    </p>
+  </div>
+</form>
+
+); };
+
+<AppWrapper log>
+  <MyComponent2 />
+</AppWrapper>
