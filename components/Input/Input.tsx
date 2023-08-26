@@ -1,6 +1,6 @@
 // Example from https://beta.reactjs.org/learn
 
-import styles from "./input.module.css";
+import styles from "./Input.module.css";
 
 export const Input = (props) => {
   return (
