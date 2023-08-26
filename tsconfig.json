@@ -19,7 +19,7 @@
       "#components/*": ["./components/*"],
       "#components": ["./components"],
       "#styles/*": ["./styles/*"],
-      "#AppWrapper": ["./components/appWrapper"],
+      "#AppWrapper": ["./components/AppWrapper"],
     },
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
