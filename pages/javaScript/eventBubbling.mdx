@@ -1,6 +1,6 @@
 # Event Bubbling
 
-Wywołanie eventu na elemencie rodzica wywołuje eventy na wszystkich elementach potomnych. W poniższym przykładzie, kliknięcie na element `p` wywoła eventy na elementach `p`, `div` i `form`.
+Calling an event on a parent element will trigger events on all child elements. In the example below, clicking on the `p` element will trigger events on the `p`, `div` and `form` elements.
 
 ## Demo
 
@@ -65,14 +65,14 @@ return (
 import { Callout } from "nextra/components";
 
 <Callout type="info" emoji="ℹ️">
-  Klikając na elementy w powyższym przykładzie, możemy zauważyć, że niezależnie
-  od tego ile eventów jest wywoływanych, **`event.target`** zawsze wskazuje na
-  element, który został kliknięty.
+  Clicking on the elements in the above example, we can see that no matter how
+  many events are triggered, **`event.target`** always points to the element
+  that was clicked.
 </Callout>
 
-## Zatrzymanie bąbelkowania
+## Stopping Event Bubbling
 
-Użycie metody `stopPropagation` na evencie zatrzymuje bąbelkowanie eventu. W poniższym przykładzie, kliknięcie na element `p` wywoła event tylko na elemencie `p`.
+Using the `stopPropagation` method on the event will stop the event from bubbling. In the example below, clicking on the `p` element will trigger events only on the `p` element.
 
 ```js filename="EventBubbling.js" {9} copy
 export const MyComponent = () => {

@@ -1,8 +1,8 @@
 # Function Currying
 
-Technika programistyczna polegająca na przekształceniu funkcji przyjmującej wiele argumentów na sekwencję funkcji przyjmujących jeden bądź więcej argumentów.
+Function currying is a technique of transforming a function that takes multiple arguments into a sequence of functions that take one or more arguments.
 
-## Definiowanie
+## Defining
 
 ```js filename="example.js" {5} copy
 const normalFunction = (arg1, arg2) => {
@@ -14,17 +14,17 @@ const curryingFunction = (arg1) => (arg2) => {
 };
 ```
 
-## Wywoływanie
+## Calling
 
 ```js filename="example.js" {3} copy
-normalFunction("foo", "bar"); //zwraca ["foo", "bar"]
+normalFunction("foo", "bar"); //returns ["foo", "bar"]
 
-curryingFunction("foo")("bar"); //zwraca ["foo", "bar"]
+curryingFunction("foo")("bar"); //returns ["foo", "bar"]
 ```
 
-## Zastosowanie
+## Usage
 
-Wyobraźmy sobie przykład innej funkcji, której przekażemy inną funkcję jako argument:
+Imagine a function that takes another function as an argument:
 
 ```js filename="example.js" copy
 const functionWithCallback = (callback) => {
@@ -33,23 +33,23 @@ const functionWithCallback = (callback) => {
 };
 ```
 
-W takim przypadku, aby przekazać do funkcji callback, który wykorzysta `internalValue` jako jeden z argumentów, musimy posłużyć się następującą konstrukcją:
+In such a case, to pass a callback function that will use `internalValue` as one of the arguments, we have to use the following construction:
 
 ```js filename="example.js" copy
 functionWithCallback((internal) => normalFunction("external", internal));
-// zwraca ['external', 'internal']
+// returns ['external', 'internal']
 ```
 
-Jeśli zamiast tego posłużymy się naszą `curryingFunction`, nie musimy tworzyć nowej funkcji strzałkowej: zamiast tego przekazuyjemy call całej funkcji, który zostanie zwrócony przez callback:
+If we use our `curryingFunction` instead, we don't have to create a new arrow function: instead, we pass the call of the whole function, which will be returned by the callback:
 
 ```js filename="example.js" copy
 functionWithCallback(curryingFunction("external"));
-// zwraca ['external', 'internal']
+// returns ['external', 'internal']
 ```
 
-## Przykład 1
+## Example #1
 
-Typowym przykładem zastosowania takiej konstrukcji, moze być przekazywanie funkcji do propsa onChange w komponentach reactowych:
+A typical example of using such a construction is passing a function to the onChange prop in react components:
 
 ```js filename="myComponent.js" {9, 14, 23, 28} copy
 import { useState } from "react";
@@ -82,7 +82,7 @@ export const MyComponent = () => {
         onChange={curryingOnChangeHandler("currying")}
         label="currying"
       />
-      <p>Ostatnio użyte pole: {lastUsedField}</p>
+      <p>Last field changed: {lastUsedField}</p>
     </div>
   );
 };
@@ -91,8 +91,7 @@ export const MyComponent = () => {
 ### Demo
 
 import { useState } from "react";
-import { Input } from "#components/Input/Input";
-import { AppWrapper } from "#AppWrapper" 
+import { Input, AppWrapper } from "#components";
 
 export const MyComponent = () => {
 const [normalState, setNormalState] = useState("");
@@ -122,7 +121,7 @@ return (
     onChange={curryingOnChangeHandler("currying")}
     label="currying"
   />
-  <p>Ostatnio użyte pole: {lastUsedField}</p>
+  <p>Last field changed: {lastUsedField}</p>
 </>
 
 )}
@@ -131,9 +130,9 @@ return (
   <MyComponent />
 </AppWrapper>
 
-## Przykład 2
+## Example #2
 
-Innym przykładem może być przekazywanie funkcji do obiektów, które posiadają własne metody:
+Another example may be passing a function to objects that have their own methods:
 
 ```js filename="myObj.js" {13} copy
 const myObj = {
@@ -147,7 +146,7 @@ testWithInternalContext = (valueToTest) => (context) => {
   console.log(valueToTest, context);
 };
 
-//oba przykłady zwrócą "foo context"
+//both returns "foo context"
 myObj.test(testWithInternalContext("foo"));
 myObj.test((context) => testWithInternalContext("foo")(context));
 ```

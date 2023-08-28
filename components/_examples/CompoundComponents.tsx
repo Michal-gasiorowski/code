@@ -1,5 +1,7 @@
 import { createContext, useContext, useState } from "react";
 
+import { Button } from "#components";
+
 const ParentContext = createContext({ count: 0 });
 
 const ParentComponent = ({ children }) => {
@@ -8,7 +10,8 @@ const ParentComponent = ({ children }) => {
   return (
     <ParentContext.Provider value={{ count }}>
       {children}
-      <button onClick={() => setCount((state) => state + 1)}>Add one</button>
+      <br />
+      <Button onClick={() => setCount((state) => state + 1)}>Add one</Button>
     </ParentContext.Provider>
   );
 };

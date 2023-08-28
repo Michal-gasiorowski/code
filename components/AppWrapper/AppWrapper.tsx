@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
-import { s } from "nextra/dist/types-c8e621b7";
+import { Button } from "#components/Button";
+import pl from "#pl";
 import styles from "./AppWrapper.module.css";
 
 export const AppContext = createContext({ log: (arg: string) => {} });
@@ -32,10 +33,8 @@ const AppWrapperComponent = ({ children, log = false }) => {
       {log && (
         <div className={styles.logWrapper}>
           <div className={styles.logHeading}>
-            <div>Konsola:</div>
-            <button className={styles.logButton} onClick={clearLog}>
-              Wyczyść
-            </button>
+            <div>{pl.components.AppWrapper.console}</div>
+            <Button onClick={clearLog}>{pl.components.AppWrapper.clear}</Button>
           </div>
           <div className={styles.codeWrapper} ref={codeWrapperRef}>
             <code>
@@ -43,7 +42,9 @@ const AppWrapperComponent = ({ children, log = false }) => {
                 {data.map((n, idx) => (
                   <li key={idx}>{n ? n : "{empty}"}</li>
                 ))}
-                {data.length === 0 && <li>Brak logów</li>}
+                {data.length === 0 && (
+                  <li>{pl.components.AppWrapper.noLogs}</li>
+                )}
               </ul>
             </code>
           </div>

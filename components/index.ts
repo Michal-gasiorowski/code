@@ -1,2 +1,3 @@
-export * from "./Input";
-export * from "./AppWrapper";
+export { Input } from "./Input";
+export { Button } from "./Button";
+export { AppWrapper } from "./AppWrapper";

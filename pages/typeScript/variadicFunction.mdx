@@ -1,0 +1,105 @@
+# Variadic function
+
+In this example, we will focus more on typing variadic functions, rather than the variadic functions themselves, which is just JS feature. But in short, variadic functions are functions that can take any number of arguments.
+
+## Brief JS definition
+
+```js filename="variadic.js" copy
+function variadicFnc(...args) {
+  console.log(args);
+}
+
+variadicFnc(1, 2, 3, 4, 5);
+// logs [1, 2, 3, 4, 5]
+```
+
+In the example above, we have a function that takes any number of arguments and logs them to the console. The `...args` syntax is called a rest parameter, and it allows us to capture all the arguments passed to the function in an array.
+
+We are not limited to have only one argument in such function, but we can only have one rest parameter:
+
+```js filename="variadic.js" copy
+function variadicFnc(firstArg, ...args) {
+  console.log(firstArg);
+  console.log(args);
+}
+
+variadicFnc(1, 2, 3, 4, 5);
+// logs 1
+// logs [2, 3, 4, 5]
+```
+
+## Typing variadic functions
+
+Simple examples aren't that complex, because `rest` parameter is just an array, and we can type it as such:
+
+```ts filename="variadic.ts" copy
+function variadicFnc(...args: number[]) {
+  console.log(args);
+}
+variadicFnc(1, 2, 3, 4, 5);
+// logs [1, 2, 3, 4, 5]
+
+function variadicStringOrNumber(...args: (string | number)[]) {
+  console.log(args);
+}
+variadicStringOrNumber(1, "string", 3, 4, 5);
+// logs [1, "string", 3, 4, 5]
+```
+
+But now, lets create something more complex. Lets assume function expect that the first argument is a callback function, and the rest are arguments for that callback function BUT we want to to have boolean as a very last argument and string at the very first. We can do that with the following code:
+
+```ts filename="variadic.ts" copy
+type argsType = [string, ...number[], boolean];
+type callbackType = (...args: argsType) => void;
+
+function variadicFnc(callback: callbackType, ...args: argsType) {
+  callback(...args);
+}
+
+variadicFnc(
+  (...args) => {
+    if (args[args.length - 1]) console.log(args);
+  },
+  "hello",
+  1,
+  2,
+  3,
+  true
+);
+```
+
+Such implmentation, will only `console.log` the arguments if the last argument is `true`. But we can do better. We can use `Parameters` utility type to extract the arguments from the callback function and use them in our function:
+
+```ts filename="variadic.ts" copy
+function variadicFnc(
+  callback: (...args: [string, ...number[], boolean]) => void,
+  ...args: [...Parameters<typeof callback>]
+) {
+  callback(...args);
+}
+```
+
+This way, we dont need to define the `argsType` types, and we can just use `Parameters` utility type to extract the arguments from the callback function.
+
+## Add generics
+
+We can also add generics to our function, and make it more flexible:
+
+```ts filename="variadic.ts" copy
+function variadicFnc<T>(
+  callback: (...args: [string, ...T[], boolean]) => void,
+  ...args: [...Parameters<typeof callback>]
+) {
+  return callback(...args);
+}
+
+variadicFnc((a: string, b: number, c: boolean) => {}, "hello", 1, true);
+
+// Error, boolean is not last argument, its a string
+variadicFnc((a: string, b: number, c: boolean) => {}, "hello", 1, true, "oops");
+// Error, bolean is not last argument, its missing
+variadicFnc((a: string, b: number, c: boolean) => {}, "hello", 1);
+
+// Error, invalid callback implementation not matching the generic type
+variadicFnc((a: string, b: string, c: boolean) => {}, "hello", 1, true);
+```

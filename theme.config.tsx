@@ -1,19 +1,20 @@
 import { DocsThemeConfig } from "nextra-theme-docs";
 import Image from "next/image";
 import React from "react";
+import pl from "#pl";
 import styles from "#styles/sidebar.module.css";
 
 const config: DocsThemeConfig = {
-  logo: <span>Frontend concepts</span>,
+  logo: <span>{pl.theme.logo}</span>,
   project: {
-    link: "https://github.com/Michal-gasiorowski/code",
+    link: pl.theme.project.link,
   },
   // chat: {
   //   link: 'https://discord.com',
   // },
-  docsRepositoryBase: "https://github.com/Michal-gasiorowski/code/tree/main",
+  docsRepositoryBase: pl.theme.docsRepositoryBase,
   footer: {
-    text: "Frontend concepts by Michał Gąsiorowski (c) 2023. Template under the MIT license, https://nextra.site/",
+    text: pl.theme.footer.text,
   },
 
   sidebar: {
@@ -26,7 +27,12 @@ const config: DocsThemeConfig = {
       if (title === "JavaScript") {
         return (
           <div className={styles.iconTitle}>
-            <Image src={"/icons/js.png"} alt="jsIcon" width={32} height={32} />{" "}
+            <Image
+              src={"/icons/javascript.svg"}
+              alt="jsIcon"
+              width={32}
+              height={32}
+            />{" "}
             {title}
           </div>
         );
@@ -35,7 +41,7 @@ const config: DocsThemeConfig = {
         return (
           <div className={styles.iconTitle}>
             <Image
-              src={"/icons/react.png"}
+              src={"/icons/react.svg"}
               alt="jsIcon"
               width={32}
               height={32}
@@ -47,7 +53,7 @@ const config: DocsThemeConfig = {
       if (title === "TypeScript") {
         return (
           <div className={styles.iconTitle}>
-            <Image src={"/icons/ts.png"} alt="jsIcon" width={32} height={32} />{" "}
+            <Image src={"/icons/ts.svg"} alt="jsIcon" width={32} height={32} />{" "}
             {title}
           </div>
         );
@@ -56,17 +62,15 @@ const config: DocsThemeConfig = {
     },
   },
   toc: {
-    title: "Na tej stronie:",
+    title: pl.theme.toc.title,
   },
   editLink: {
-    text: "Edytuj tę stronę na GitHub",
+    text: pl.theme.editLink.text,
   },
   feedback: {
     content: null,
   },
   search: {
-    placeholder: "Szukaj...",
-    loading: "Ładowanie...",
     component: null,
   },
 };

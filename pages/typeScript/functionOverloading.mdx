@@ -1,8 +1,8 @@
-# Function Overloading
+# Function overloading
 
-Function Overloading pozwala na zdefiniowanie wielu funkcji o tej samej nazwie, ale z różnymi parametrami. Funkcja wywoływana jest na podstawie przekazanych parametrów.
+Function overloading allows to define multiple functions with the same name, but with different parameters. The function is called based on the parameters passed.
 
-## Definiowanie
+## Defining
 
 ```js filename="overloading.ts" copy
 function foo(arg1: string, arg2: string): string[];
@@ -17,25 +17,25 @@ function foo(arg1: any, arg2: any): any {
 import { Callout } from "nextra/components";
 
 <Callout emoji="💡">
-  Warto zwrócić uwagę, że nie trzeba sprawdzać czy **`typeof arg2 === string`**,
-  ponieważ jeśli **`arg1`** jest stringiem, to **`arg2`** też musi być stringiem
-  i TS to wie.
+  It is worth noting that you do not have to check if **`typeof arg2 ===
+  string`**, because if **`arg1`** is a string, then **`arg2`** must also be a
+  string and TS knows it.
 </Callout>
 
-## Wywoływanie
+## Calling
 
 ```js filename="overloading.ts" copy
 const one = foo("a", "b");
-// zwraca ['a', 'b'], one: string[]
+// returns ['a', 'b'], one: string[]
 const two = foo(1, 2);
-// zwraca 3, two: number
+// returns 3, two: number
 const three = foo("a", 10);
 // error: No overload matches this call.
 ```
 
-## Alternatywa
+## Alternative
 
-Alternatywą dla overloadingu jest użycie typów warunkowych. W tym przypadku TS również wie jakiego typu jest zwracana wartość, wie również jakiego typu powinny być parametry, ale sama konstrukcja takiej funkcji jest mniej elegancka.
+An alternative to overloading is to use conditional types. In this case, TS also knows what type the returned value is, it also knows what type the parameters should be, but the construction of such a function itself is less elegant.
 
 ```js filename="overloading.ts" copy
 type ConditionalType<T> = T extends string ? string[] : number;
@@ -50,16 +50,16 @@ function bar<T extends string | number>(arg1: T, arg2: T): ConditionalType<T> {
 }
 
 const one = bar("a", "b");
-// zwraca ['a', 'b'], one: string[]
+// returns ['a', 'b'], one: string[]
 const two = bar(1, 2);
-// zwraca 3, two: number
+// returns 3, two: number
 const three = bar("a", 10);
 // type error: Argument of type '10' is not assignable to parameter of type '"a"'
 ```
 
-## Przykład
+## Example
 
-Stwórzmy funkcję, która pozwala manipulować dwoma typami argumentów w taki sposób, aby zachować typy zwracane przez funkcję.
+Let's create a function that allows you to manipulate two types of arguments in such a way as to maintain the types returned by the function.
 
 ```js filename="overloading.ts" copy
 import { useRouter } from "next/router";
@@ -86,9 +86,8 @@ const manipulatedQuery3 = manipulateQuery(["foo", "bar"]);
 ```
 
 <Callout emoji="💡">
-  W tym przypadku możemy zaobserwować, że jeśli przekazany argument jest
-  dowolnym z dwu możliwych typów, to TS oczekuje, że zwrócona wartość będzie
-  dowolnym z dwu możliwych typów. Jeśli natomiast posłużymy się argumentem o
-  konkretnym typie, to TS będzie wiedział, że zwrócona wartość będzie miała ten
-  sam typ.
+  In this case, we can observe that if the passed argument is any of the two
+  possible types, TS expects the returned value to be any of the two possible
+  types. However, if we use an argument of a specific type, TS will know that
+  the returned value will have the same type.
 </Callout>
