@@ -18,6 +18,7 @@ const config: DocsThemeConfig = {
   },
 
   sidebar: {
+    defaultMenuCollapseLevel: 3,
     titleComponent({ title, type }) {
       if (type === "separator") {
         return (

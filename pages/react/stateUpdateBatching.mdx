@@ -1,0 +1,93 @@
+# State Update Batching
+
+## Overview
+
+In React, multiple state updates are batched into a single update for better performance.
+
+```jsx filename="MultipleUpdates.jsx" copy
+import React, { useState } from "react";
+
+function MultipleUpdates() {
+  const [count, setCount] = useState(0);
+  const [count2, setCount2] = useState(0);
+
+  function handleClick() {
+    setCount((state) => state + 1);
+    setCount2((state) => state + 1);
+  }
+
+  return (
+    <div>
+      <p>
+        Count: {count} / {count2}
+      </p>
+      <button onClick={handleClick}>Increment</button>
+    </div>
+  );
+}
+```
+
+Even though we call `setCount` and `setCount2` in the same function, React will batch the state updates into a single update, which leads to a single re-render.
+
+## Difference between React 18 and earlier versions
+
+In earlier versions of React, state updates are batched only for browser events. For example, if we call `setCount` and `setCount2` in a `setTimeout` callback, React will not batch the state updates.
+
+```jsx filename="MultipleUpdates.jsx" copy
+import React, { useState } from "react";
+
+function MultipleUpdates() {
+  const [count, setCount] = useState(0);
+  const [count2, setCount2] = useState(0);
+
+  function handleClick() {
+    setTimeout(() => {
+      setCount((state) => state + 1);
+      setCount2((state) => state + 1);
+    }, 1000);
+  }
+
+  return (
+    <div>
+      <p>
+        Count: {count} / {count2}
+      </p>
+      <button onClick={handleClick}>Increment</button>
+    </div>
+  );
+}
+```
+
+In React 18, state updates are batched for all updates, including `setTimeout` and `setIntevals` callbacks, event handlers, asynchronous code etc.
+
+## How to stop batching
+
+If you want to stop batching, you can use `ReactDOM.flushSync` to flush all pending state updates.
+
+```jsx filename="MultipleUpdates.jsx" copy
+import React, { useState, flushSync } from "react";
+
+function MultipleUpdates() {
+  const [count, setCount] = useState(0);
+  const [count2, setCount2] = useState(0);
+
+  function handleClick() {
+    setTimeout(() => {
+      flushSync(() => {
+        setCount((state) => state + 1);
+        // it forces React to render here
+      });
+      setCount2((state) => state + 1);
+    }, 1000);
+  }
+
+  return (
+    <div>
+      <p>
+        Count: {count} / {count2}
+      </p>
+      <button onClick={handleClick}>Increment</button>
+    </div>
+  );
+}
+```

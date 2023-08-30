@@ -1,0 +1,313 @@
+# Component Lifecycle
+
+This article is a summary, of how the component lifecycle works in React, both in class and functional components equivalent using hooks.
+
+Whole process can be divided into 3 phases:
+
+- Mounting
+- Updating
+- Unmounting
+
+and one more extra, which is not a phase, but a separate process:
+
+- Error handling
+
+And for each phase, there are methods that are called in order to perform some actions. Lets look at them in detail.
+
+## Mounting
+
+### Class
+
+```jsx filename="App.js"
+import React, { Component } from "react";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      name: this.props.name,
+    };
+  }
+
+  UNSAFE_componentWillMount() {
+    // happens before constructor
+  }
+
+  static getDerivedStateFromProps() {
+    // happens before render
+  }
+
+  componentDidMount() {
+    // happens after render
+  }
+
+  render() {
+    console.log("render");
+    return (
+      <div>
+        <h1>Hello {this.name}}</h1>
+      </div>
+    );
+  }
+}
+```
+
+So, the whole mounting phase looks like this: `constructor -> UNSAFE_componentWillMount -> getDerivedStateFromProps -> render -> componentDidMount`
+
+import { Callout } from "nextra/components";
+
+<Callout type="error" emoji="️🚫">
+  UNSAFE_componentWillMount is deprecated, and should be avoided.
+  [Read/Alternatives](https://react.dev/reference/react/Component#unsafe_componentwillmount)
+</Callout>
+
+### Functional
+
+```jsx filename="App.js"
+import React, { useState, useEffect } from "react";
+
+const App = (props) => {
+  // this is what technically happens before "constructor", which is replaced by useState
+
+  const [name, setName] = useState(props.name);
+
+  useEffect(() => {
+    // happens after render, equivalent to componentDidMount
+  }, []);
+
+  useEffect(() => {
+    setState((prevState) => ({ ...prevState, name }));
+    // this is a replacement for getDerivedStateFromProps: when new props are received,
+    // update state. Happens before render and triggers re-render
+  }, [name]);
+
+  return (
+    <div>
+      <h1>Hello {name}</h1>
+    </div>
+  );
+};
+```
+
+So, the whole mounting phase looks like this: `useState -> useEffect -> render`. There is no UNSAFE_componentWillMount equivalent in functional components. There is also no constructor and getDerivedStateFromProps equivalent, but we can use `useState` and `useEffect` to achieve the same result.
+
+## Updating
+
+### Class
+
+```jsx filename="App.js"
+import React, { Component } from "react";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      name: this.props.name,
+    };
+  }
+
+  UNSAFE_componentWillUpdate(nextProps, nextState) {
+    // happens first
+  }
+
+  static getDerivedStateFromProps() {
+    // happens after UNSAFE_componentWillUpdate, after receiving new props
+  }
+
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    // happens after getDerivedStateFromProps
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    // happens before render
+    // return true if you want to re-render, false otherwise
+  }
+
+  getSnapshotBeforeUpdate(prevProps, prevState) {
+    // happens after render, but before DOM is updated
+    // return value is passed to componentDidUpdate as third argument
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    // happens after render
+  }
+
+  render() {
+    console.log("render");
+    return (
+      <div>
+        <h1>Hello {this.name}}</h1>
+      </div>
+    );
+  }
+}
+```
+
+Updating phase looks like this: `UNSAFE_componentWillUpdate -> getDerivedStateFromProps -> UNSAFE_componentWillReceiveProps -> shouldComponentUpdate -> render -> getSnapshotBeforeUpdate -> DOM update -> componentDidUpdate`
+
+<Callout type="error" emoji="️🚫">
+  UNSAFE_componentWillUpdate and UNSAFE_componentWillReceiveProps are
+  deprecated, and should be avoided. [Read/Alternatives
+  (update)](https://react.dev/reference/react/Component#componentwillupdate) and
+  [Read/Alternatives (receive
+  props)](https://react.dev/reference/react/Component#unsafe_componentwillreceiveprops)
+</Callout>
+
+### Functional
+
+```jsx filename="App.js"
+import React, { useState, useEffect, memo } from "react";
+
+const App = memo((props) => {
+  const [name, setName] = useState(props.name);
+
+  useEffect(() => {
+    // happens after render, equivalent to componentDidUpdate
+  }, []);
+
+  useEffect(() => {
+    setState((prevState) => ({ ...prevState, name }));
+    // this is a replacement for getDerivedStateFromProps: when new props are received,
+    // update state. Happens before render and triggers re-render
+  }, [name]);
+
+  return (
+    <div>
+      <h1>Hello {name}</h1>
+    </div>
+  );
+});
+```
+
+Updating phase looks like this: `useEffect -> render`. Missing methods can be replaced by `useEffect` with proper dependencies. Also, instead of `shouldComponentUpdate` we can use `memo` to prevent re-rendering if props didn't change.
+
+Catching snapshot is also possible, but its not built-in. We need to use `useRef` hook to store the snapshot and then use it in `useEffect` after render.
+
+```jsx filename="App.js"
+import React, { useState, useEffect, memo, useRef } from "react";
+
+const App = memo((props) => {
+  const [name, setName] = useState(props.name);
+  const snapshot = useRef();
+
+  useEffect(() => {
+    // happens after render, equivalent to componentDidUpdate
+    if (snapshot.current) {
+      // do something with snapshot.current
+    }
+  });
+
+  return (
+    <div>
+      <h1>Hello {name}</h1>
+    </div>
+  );
+});
+```
+
+Unlike useState, useRef doesn't trigger re-render when its value changes, so we can use it to store the snapshot in any given moment.
+
+## Unmounting
+
+### Class
+
+```jsx filename="App.js"
+import React, { Component } from "react";
+
+class App extends Component {
+  componentWillUnmount() {
+    // happens before component is removed from DOM
+  }
+
+  render() {
+    console.log("render");
+    return (
+      <div>
+        <h1>Hello World!</h1>
+      </div>
+    );
+  }
+}
+```
+
+So, there is only one method that is called before component is removed from DOM: `componentWillUnmount`.
+
+### Functional
+
+```jsx filename="App.js"
+import React, { useEffect } from "react";
+
+const App = (props) => {
+  useEffect(() => {
+    return () => {
+      // this is a replacement for componentWillUnmount
+    };
+  });
+
+  return (
+    <div>
+      <h1>Hello World!</h1>
+    </div>
+  );
+};
+```
+
+componentWillUnmount equivalent is achieved by returning a function from `useEffect` hook. This function will be called before component is removed from DOM.
+
+## Error handling
+
+### Class
+
+```jsx filename="App.js"
+import React, { Component } from "react";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  componentDidCatch(error, info) {
+    // happens when error is thrown in child component
+  }
+
+  static getDerivedStateFromError(error) {
+    // happens after componentDidCatch
+
+    return { hasError: true };
+    // this will update state and trigger re-render
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <h1>Something went wrong.</h1>;
+    }
+
+    return (
+      <div>
+        <h1>Hello World!</h1>
+      </div>
+    );
+  }
+}
+```
+
+This allow us to catch errors thrown in child components. A component with these methods is called an _error boundary_.
+
+### Functional
+
+In functional components, there is no built-in way to catch errors in child components. What we can do, is wrap the component in `ErrorBoundary` component, which will catch the error and display fallback UI, or it can pass it down to the functional component, which can then display fallback UI.
+
+```jsx filename="App.js"
+import React, { useState, useEffect, memo } from "react";
+import ErrorBoundary from "./ErrorBoundary";
+// implementation like one above, that catches errors and displays fallback UI
+
+const App = () => {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+};
+```

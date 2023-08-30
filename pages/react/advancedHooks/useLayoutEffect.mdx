@@ -1,0 +1,45 @@
+# UseLayoutEffect
+
+## Difference between useEffect and useLayoutEffect
+
+- useEffect is asynchronous, its extecuted after the render is committed to the screen and its not blocking the rendering process. That means, its suitable for most of the cases.
+
+- useLayoutEffect is synchronous, its executed before the render is committed to the screen and its blocking the rendering process. That means, its suitable for cases where you need to measure something on the screen, like the size of an element or the position of the scroll.
+
+## When to use useLayoutEffect
+
+- When you need to measure something on the screen, like the size of an element or the position of the scroll.
+- When you need to do DOM manipulations before the browser paints the screen.
+- When you need to do DOM manipulations and want to avoid the flash of unstyled content (FOUC).
+
+### Example
+
+```jsx filename="App.js"
+import React, { useState, useEffect, useLayoutEffect } from "react";
+import "./styles.css";
+
+const App = () => {
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (width > 600) {
+      document.body.style.backgroundColor = "red";
+    } else {
+      document.body.style.backgroundColor = "blue";
+    }
+  }, [width]);
+
+  return (
+    <div className="App">
+      <h1>useLayoutEffect</h1>
+      <h2>Window width: {width}</h2>
+    </div>
+  );
+};
+```

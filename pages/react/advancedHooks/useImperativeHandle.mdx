@@ -1,0 +1,173 @@
+# UseImperativeHandle
+
+## ForwardRef
+
+This method is used to forward a ref from a parent component to a child component. This is useful when you want to call a method on a child component from a parent component, or access a property on a child component from a parent component.
+
+```tsx filename="forwardRef.tsx" copy
+import { FC, forwardRef, useRef } from "react";
+
+function Parent() {
+  const childRef = useRef(null);
+  return (
+    <>
+      <Child ref={childRef} />
+      <button onClick={() => childRef.current.focus()}>Focus on input</button>
+    </>
+  );
+}
+
+const Child = forwardRef(function Child(props, ref) {
+  return <input ref={inputRef} />;
+});
+```
+
+Technically, you can pass refs down with regular props, but this is not recommended due to several reasons:
+
+- It is not type-safe (unless you type the ref by hand)
+- It is not obvious that the component accepts a ref under a certain prop name
+- It is not obvious what the ref is used for
+- forwardRef is a standard way of passing refs down, which is recognized by most developers
+- If at any point in time React team decides to change the way refs are passed down, you will have to change your code if you are not following the standard way of doing so
+
+## UseImperativeHandle hook
+
+This hook is used to expose certain methods or properties of a component to its parent component. By simple ref forwarding, you expose the whole component to the parent component, but with useImperativeHandle, you can expose only certain methods or properties of the component. You can even rename the methods or properties that you expose or combine them with other methods or properties.
+
+```tsx filename="useImperativeHandle.tsx" copy
+import { FC, forwardRef, useImperativeHandle, useRef } from "react";
+
+const Parent = () => {
+  const childRef = useRef(null);
+  const log = childRef.current?.console || (() => {});
+  //simple implementation, to avoid errors if the method is not defined
+
+  return (
+    <>
+      <Child ref={childRef} />
+      <button onClick={() => childRef.current.log()}>Call child method</button>
+    </>
+  );
+};
+
+const Child = forwardRef((props, ref) => {
+  useImperativeHandle(ref, () => ({
+    console: () => {
+      internalMethod();
+    },
+  }));
+
+  const internalMethod = () => {
+    console.log(`Hello, this is some random number: ${Math.random()}`);
+  };
+
+  return null;
+});
+```
+
+import { AppWrapper } from "#components";
+import { Parent } from "#components/_examples/UseImperativeHandle";
+
+### Demo
+
+<AppWrapper log>
+  <Parent />
+</AppWrapper>
+
+import { Callout } from "nextra/components";
+
+<Callout emoji="💡">
+  You can use this method as alternative to callbacks, when you want to call a
+  method on a child component from a parent component. In this example, instead
+  of passing a callback to the child component that will call `internalMethod()`
+  from within the child component, we expose the `internalMethod()` method to
+  the parent component, so that the parent component can call it directly.
+</Callout>
+
+### Dependecies
+
+Similarly to `useEffect`, you can pass an array of dependencies as a last argument to useImperativeHandle. This will cause the method to be redefined every time the dependencies change. If you omit the dependencies, the method will be redefined on every render.
+
+```tsx filename="useImperativeHandle.tsx" copy
+import { FC, useImperativeHandle, useRef } from "react";
+
+const SimpleComponent = forwardRef(function SimpleComponent(props, ref) {
+  //implementation
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      // implementation
+    }),
+    [props.dependency1, props.dependency2]
+  );
+
+  return null;
+});
+```
+
+## ForwardRef With UseImperativeHandle
+
+Now, lets try to combine those two methods, to create component that will expose only one method from itself to the parent component, using actual ref forwarding.
+
+import { Tabs, Tab } from "nextra/components";
+
+<Tabs items={["Parent.tsx", "Input.tsx"]}>
+<Tab>
+    ```tsx filename="parent.tsx" copy
+    import { Button, Input } from "#components";
+
+    import { useRef } from "react";
+
+    export const FancyInputParent = () => {
+        const inputRef = useRef(null);
+        return (
+            <>
+                <Input ref={inputRef} label="Label" />
+                <Button onClick={() => inputRef.current.focus()}>Focus on input</Button>
+            </>
+    )};
+    ```
+
+</Tab>
+<Tab>
+    ```tsx filename="input.tsx" copy
+    import { FC, Ref, forwardRef, useImperativeHandle, useRef } from "react";
+
+    import styles from "./Input.module.css";
+
+    type InputProps = {
+        label: string;
+        value?: string;
+        onChange?: (e: any) => void;
+        ref: Ref<unknown>;
+    };
+
+    export const Input: FC<InputProps> = forwardRef((props, ref) => {
+        const inputRef = useRef(null);
+
+        useImperativeHandle(ref, () => ({
+            focus: () => {
+            inputRef.current.focus();
+            },
+        }));
+
+        return (
+            <div className={styles.container}>
+                {props.label}:{" "}
+                <input className={styles.input} {...props} ref={inputRef} />
+            </div>
+        );
+    });
+    ```
+
+</Tab>
+</Tabs>
+
+### Demo
+
+import { FancyInputParent } from "#components/_examples/UseImperativeHandle";
+
+<AppWrapper>
+  <FancyInputParent />
+</AppWrapper>
