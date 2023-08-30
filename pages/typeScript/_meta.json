@@ -1,4 +1,6 @@
 {
-  "functionOverloading": "Function overloading",
-  "variadicFunction": "Variadic function"
+  "inference": "Inference",
+  "functionOverloading": "Function Overloading",
+  "variadicFunction": "Variadic Function",
+  "classMembers": "Class Members"
 }

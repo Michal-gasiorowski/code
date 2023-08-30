@@ -1,0 +1,149 @@
+# Type Inference Overview
+
+Type inference is the process of determining the type of an expression based on the types of its subexpressions. For example, in expression const x = 3 + 4, the type of the subexpression 3 + 4 is inferred to be number, and that type is propagated to the variable x. In TypeScript, type inference occurs in many different situations:
+
+## Variables
+
+When a variable is initialized, TypeScript infers its type from the type of its initializer. For example, in the following code, TypeScript infers the type of all variables to be number:
+
+```ts filename="number.ts"
+const x = 3;
+const y = 3 + 4;
+const z = x + y;
+```
+
+What typescript is trying to do, is determine best type candidate for the variable. In this case, it is number. If we were to change the value of x to a string, typescript would infer the type of x to be string.
+
+```ts filename="string.ts"
+const x = "3"; // y: string
+const y = 3 + 4;
+const z = x + y; // z: string
+const q = x - y;
+// Error: The left-hand side of an arithmetic operation must be of type
+// 'any', 'number', 'bigint' or an enum type.
+```
+
+## Properties
+
+Same idea applies to properties. TypeScript infers the type of a property from the type of its initializer. For example, in the following code, TypeScript infers the type of all properties to be number or string. At the same time, TypeScript infers the type of the new object that references the other one to be the same as the type of the original object.
+
+```ts filename="properties.ts"
+const obj = {
+  x: 3,
+  y: 4,
+  z: "hello",
+};
+const x = obj.x; // x: number
+const y = obj.y; // y: number
+const z = obj.z; // z: string
+const newObject = obj;
+// newObject: { x: number; y: number; z: string }
+```
+
+## Arrays
+
+TypeScript infers the type of an array from the type of its elements. Its straightforward when all elements have the same type:
+
+```ts filename="arrays.ts"
+const arr = [1, 2, 3];
+// arr: number[]
+const first = arr[0]; // first: number
+const second = arr[1]; // second: number
+```
+
+When the elements have different types, TypeScript infers the union type of all element types:
+
+```ts filename="arrays.ts"
+const arr = [1, "hello", true];
+// arr: (string | number | boolean)[]
+const first = arr[0]; // first: string | number | boolean
+const second = arr[1]; // second: string | number | boolean
+```
+
+As you can see, typescript infers type of any element in such arrays to be union of all possible types, which sometimes is what we want, but sometimes we want those elements to be in specific order. In that case, we can use tuple.
+
+```ts filename="arrays.ts"
+const arr: [number, string, boolean] = [1, "hello", true];
+// arr: [number, string, boolean]
+const first = arr[0]; // first: number
+const second = arr[1]; // second: string
+```
+
+import { Callout } from "nextra/components";
+
+<Callout emoji="💡">
+  Tuple is a term used in computer science to describe a data structure that is
+  finite ordered list of elements. In typescript, tuple allows you to express an
+  array with a fixed number of elements whose types are known, but need not be
+  the same.
+</Callout>
+
+However, we can try to define something more flexible, which still has some order to it. For example, we can define a type that represents an array of numbers, but we don't know how many numbers there are in the array.
+
+```ts filename="arrays.ts"
+type ArrType = [string, ...number[], boolean];
+
+const arr: ArrType = ["hello", 1, 2, 3, true];
+// arr: [string, ...number[], boolean]
+const first = arr[0]; // first: string
+const second = arr[1]; // second: number | boolean
+
+const anotherArr: ArrType = ["hello", true];
+// this is fine, as the ...number[] can be empty
+
+const wrongArr: ArrType = ["hello", 1, 2, 3];
+// Type at position 3 in source is not compatible with type at position 2 in target.
+// Type 'number' is not assignable to type 'boolean'.
+```
+
+In example above, you can observe two things: first, typescript cannot determine how many elements we want to use in `...number[]` thus, it infers the type of second element to be `number | boolean` as the last element is expected to be boolean and the `...number[]` can be empty. Second, if we try to assign an array that doesn't have a boolean as last element, typescript will throw an error.
+
+## Return types
+
+TypeScript infers the return type of a function from the type of its return expression:
+
+```ts filename="return.ts"
+function add(a: number, b: number) {
+  return a + b;
+}
+
+const sum = add(1, 2);
+// sum: number
+
+function addOne(a?: number) {
+  if (!a) return "no argument provided";
+  return a + 1;
+}
+
+const sum2 = addOne(1);
+// sum2: number | "no argument provided"
+```
+
+However, sometimes infered type is not one that we want. In example above, typescript knows that if we don't provide an argument to `addOne` function, it will return a literal `"no argument provided"`, but we might want to treat that as general `string` type. In such case, we can cast the return type of the function to be `string` or we can provide return type annotation.
+
+```ts filename="return.ts"
+function addOne(a?: number): string | number {
+  if (!a) return "no argument provided";
+  return a + 1;
+}
+
+function addOneCastReturn(a?: number) {
+  if (!a) return "no argument provided" as string;
+  return a + 1;
+}
+
+const sum = addOne(1);
+// sum: string | number
+const sum2 = addOneCastReturn(1);
+// sum2: string
+```
+
+Generally, it is better to provide return type annotation, as it is more readable and less error prone. It will also ensure that the actual return type of the function is the same as the one we expect.
+
+```ts filename="return.ts"
+function addOne(a?: number): string {
+  if (!a) return "no argument provided";
+  return a + 1;
+  // error: Type 'number' is not assignable to type 'string'.
+}
+```

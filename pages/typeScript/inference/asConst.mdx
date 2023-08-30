@@ -1,0 +1,235 @@
+# As Const
+
+Sometimes default infered type is not strict enough, or maybe typescript will infer a type as too general.
+
+## Defining
+
+```ts filename="asConst.ts" copy
+const numbersArray = [1, 2, 3];
+// numbersArray is inferred as number[]
+
+const numbersArrayAsConst = [1, 2, 3] as const;
+// numbersArrayAsConst is inferred as readonly [1, 2, 3]
+
+const object = {
+  a: 1,
+  b: 2,
+  c: 3,
+};
+// object is inferred as { a: number, b: number, c: number }
+
+const objectAsConst = {
+  a: 1,
+  b: 2,
+  c: 3,
+} as const;
+// objectAsConst is inferred as { readonly a: 1, readonly b: 2, readonly c: 3 }
+
+const stringArray = ["a", "b", "c"];
+// stringArray is inferred as string[]
+
+const stringArrayAsConst = ["a", "b", "c"] as const;
+// stringArrayAsConst is inferred as readonly ["a", "b", "c"]
+
+const nestedObject = {
+  a: {
+    b: {
+      c: 1,
+    },
+  },
+};
+// nestedObject is inferred as { a: { b: { c: number } } }
+
+const nestedObjectAsConst = {
+  a: {
+    b: {
+      c: 1,
+    },
+  },
+} as const;
+// nestedObjectAsConst is inferred as { readonly a: { readonly b: { readonly c: 1 } } }
+```
+
+As you can see, `as const` changes the type of the variable to be more strict, and it also makes the variable readonly.
+
+## Usage
+
+Lets try to make some practical usage of `as const`. Imagine we have a function that takes some `routes` as an argument, but we dont want to allow any string to be passed as a route, we want to allow only routes that we have defined in our app.
+
+```ts filename="asConstUsage.ts" copy
+const routes = {
+  home: "/",
+  about: "/about",
+  contact: "/contact",
+} as const;
+
+type Routes = typeof routes;
+// type Routes = {
+//   readonly home: "/";
+//   readonly about: "/about";
+//   readonly contact: "/contact";
+// }
+
+type Route = Routes[keyof Routes];
+// type Route = "/" | "/about" | "/contact"
+
+function navigateTo(route: Route) {
+  // ...
+}
+
+navigateTo(routes.home);
+navigateTo("/");
+// this is also fine, because "/" is the same as routes.home
+
+navigateTo("/foo");
+//Argument of type '"/foo"' is not assignable to parameter of type '"/" | "/about" | "/contact"'.
+```
+
+## Getting rid of readonly
+
+Sometimes we want to get rid of readonly, for any rason, sometimes its even some quirks required by some library. We have two options to deal with it.
+
+### foo as foo
+
+```ts filename="asConstUsage2.ts" copy
+const routes = {
+  home: "/",
+  about: "/about",
+  contact: "/contact",
+} as {
+  home: "/";
+  about: "/about";
+  contact: "/contact";
+};
+```
+
+This is the simplest way, but it requires us to write the type twice, which is not very DRY.
+
+### Writtable
+
+We can create a type that will make all properties of an object writable, by using `-readonly` mapped type.
+
+```ts filename="asConstUsage3.ts" copy
+type Writeable<T> = { -readonly [P in keyof T]: T[P] };
+
+const routes = {
+  home: "/",
+  about: "/about",
+  contact: "/contact",
+} as const;
+
+type Routes = Writeable<typeof routes>;
+// type Routes = {
+//   home: "/";
+//   about: "/about";
+//   contact: "/contact";
+// }
+```
+
+If we want to recursively make all properties of an object writable, we can use this type:
+
+```ts filename="asConstUsage4.ts" copy
+type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
+```
+
+## Bonus
+
+Its beyond the scope of this article, but lets try to figure out how Writeable type works.
+
+```ts filename="writtable.ts" copy
+type Writeable<T> = { -readonly [P in keyof T]: T[P] };
+// desired functionality
+const testObj = {
+  a: 1,
+  b: 2,
+} as const;
+// object is readonly
+
+type typeOfTestObj = typeof testObj;
+// type typeOfTestObj = {
+//    readonly a: 1;
+//    readonly b: 2;
+// }
+```
+
+Lets try to describe what `Writeable` does:
+
+- it takes a generic type `T`
+- it maps all keys of `T` to a new type
+- it stores all keys of `T` under a generic `P`
+- it returns a new type under each of the keys of `T`, using `P` to access the value of `T`
+- (to this point, it basically returns the same type as `T`)
+- it removes `readonly` modifier from each of the keys of `T`
+
+Lets try to recreate `Writeable` type step by step.
+
+```ts filename="writtable.ts" copy
+type mappedToNull = { [key in "a" | "b"]: null };
+// type mappedToNull = { a: null; b: null; }
+
+type mappedToKey = { [key in "a" | "b"]: key };
+// type mappedToKey = { a: "a"; b: "b"; }
+
+type keys<T> = keyof T;
+type testObjKeys = keys<typeOfTestObj>;
+// type testObjKeys = "a" | "b"
+
+type mappedObj = { [key in testObjKeys]: key };
+// type mappedObj = { a: "a"; b: "b"; }
+
+type mappedObjOneLiner = { [key in keys<typeOfTestObj>]: key };
+// type mappedObjOneLiner = { a: "a"; b: "b"; }
+
+type mappedObjWithGeneric<T> = { [key in keys<T>]: key };
+type newMappedObj = mappedObjWithGeneric<typeOfTestObj>;
+// type newMappedObj = { a: "a"; b: "b"; }
+
+type usingKeysToAccessObj<T> = { [key in keys<T>]: T[key] };
+type newMappedObj2 = usingKeysToAccessObj<typeOfTestObj>;
+// type newMappedObj2 = {
+//    readonly a: 1;
+//    readonly b: 2;
+// }
+
+type removingKeysHelper<T> = { [key in keyof T]: T[key] };
+type newMappedObj3 = removingKeysHelper<typeOfTestObj>;
+// type newMappedObj3 = {
+//    readonly a: 1;
+//    readonly b: 2;
+// }
+
+type removingReadonly<T> = { -readonly [key in keyof T]: T[key] };
+type newMappedObj4 = removingReadonly<typeOfTestObj>;
+// type newMappedObj4 = {
+//    a: 1;
+//    b: 2;
+// }
+
+type replacingKeyWithP<T> = { -readonly [P in keyof T]: T[P] };
+type removedReadonly = replacingKeyWithP<typeOfTestObj>;
+// type removedReadonly = {
+//    a: 1;
+//    b: 2;
+// }
+```
+
+Now, lets break it down:
+
+- `typeOfTestObj` is the type of our object, with readonly properties
+- `mappedToNull` is a mapped type, that maps all keys of our object to null using `in` syntax. `key` is a generic, that can have any name we want.
+- `mappedToKey` is a mapped type, that maps all keys of our object to the key itself.
+- `testObjKeys` is a type that contains all keys of our object
+- `mappedObj` is a mapped type, that maps all keys of our object to the key itself, by using `testObjKeys` type
+- `mappedObjOneLiner` is the same as all stepes abouve, but written in one line
+- `mappedObjWithGeneric` is the same as `mappedObjOneLiner`, but using generic to pass the type of our object
+- `newMappedObj` is our new type, mapped with `mappedObjWithGeneric`
+- `usingKeysToAccessObj` is a mapped type, that maps all keys of our object to the value that is under that key
+- `newMappedObj2` is our new type, mapped with `usingKeysToAccessObj`
+- `removingKeysHelper` is the same as `usingKeysToAccessObj`, but we replaced `keys<T>` with `keyof T`, same built in that we used in `keys<T>`
+- `newMappedObj3` is our new type, mapped with `removingKeysHelper`
+- `removingReadonly` is the same as `removingKeysHelper`, but we added `-readonly` to the key. Minus sign is a special syntax that tells typescript to remove a modifier from the key. We can also add `+` to add a modifier to the key.
+- `newMappedObj4` is our new type, mapped with `removingReadonly`
+- `replacingKeyWithP` is the same as `removingReadonly`, but we replaced `key` with `P`. `P` is a generic, that can have any name we want.
+- `removedReadonly` is our new type, mapped with `replacingKeyWithP`
+
+This way, step by step we created exact same type as `Writeable` type. `DeepWriteable` works the same way, but it uses recursion to call itself on nested objects.

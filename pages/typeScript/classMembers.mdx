@@ -1,0 +1,211 @@
+# Class Members
+
+In TS you have control over whether methods or properties are visible / can be modified from outside the class.
+
+## Public
+
+The default visibility of class members is `public`. Public members can be accessed from anywhere. Also, this is a default state, so you don't have to specify it.
+
+```ts filename="person.ts"
+class Person {
+  public name: string;
+  surname: string;
+
+  constructor(name: string) {
+    this.name = name;
+    this.surname = "Doe";
+  }
+}
+
+const myPerson = new Person("John");
+
+console.log(myPerson.name); // log: John
+console.log(myPerson.surname); // log: Doe
+```
+
+## Private
+
+Private members can only be accessed from within the class. This means that you can't access them from outside the class, nor from any class that extends it.
+
+```ts {2, 17} filename="person.ts"
+class Person {
+  private name: string;
+  surname: string;
+
+  constructor(name: string) {
+    this.name = name;
+    this.surname = "Doe";
+  }
+
+  getName() {
+    return this.name;
+  }
+}
+
+const myPerson = new Person("John");
+
+console.log(myPerson.name);
+//Property 'name' is private and only accessible within class 'Person'
+
+console.log(myPerson.getName()); // log: John
+console.log(myPerson.surname); // log: Doe
+```
+
+import { Callout } from "nextra/components";
+
+<Callout emoji="💡">
+  As you can see, even if the `name` property is private, we can still access it
+  from within the class. This allow us to create a method that returns the value
+  of the private property.
+</Callout>
+
+Its also not possible to access such properties from within a class that extends it. Lets assume, that Person is a class from previous example.
+
+```ts {3} filename="person.ts"
+const ExtendedPerson = class extends Person {
+  getName() {
+    return `${this.surname}, ${this.name}`;
+    // Property 'name' is private and only accessible within class 'Person'
+  }
+};
+```
+
+## Protected
+
+Protected members can be accessed from within the class and from within classes that extend it.
+
+```ts {2, 17} filename="person.ts"
+class Person {
+  protected name: string;
+  surname: string;
+
+  constructor(name: string) {
+    this.name = name;
+    this.surname = "Doe";
+  }
+
+  getName() {
+    return this.name;
+  }
+}
+
+const myPerson = new Person("John");
+
+console.log(myPerson.name);
+//Property 'name' is protected and only accessible within class 'Person' and its subclasses.
+```
+
+Unlike private members, protected members can be accessed from within a class that extends it.
+
+```ts {3} filename="person.ts"
+const ExtendedPerson = class extends Person {
+  getName() {
+    return `${this.surname}, ${this.name}`;
+    // no error
+  }
+};
+```
+
+## Readonly
+
+Readonly properties can only be set in the constructor. This means that you can't change them after the object is created, even from within the class.
+
+```ts {2, 11, 18} filename="person.ts"
+class Person {
+  readonly name: string;
+  surname: string;
+
+  constructor(name: string) {
+    this.name = name;
+    this.surname = "Doe";
+  }
+
+  overrideName(name: string) {
+    this.name = "Jane";
+    // Cannot assign to 'name' because it is a read-only property.
+  }
+}
+
+const myPerson = new Person("John");
+
+myPerson.name = "Jane";
+// Cannot assign to 'name' because it is a read-only property.
+```
+
+## Static
+
+Static members are not tied to a specific instance of a class. This means that you can access them without creating an instance of a class.
+
+```ts filename="person.ts"
+class Person {
+  static surname = "Doe";
+  name: string;
+  gender: string;
+
+  constructor(name: string) {
+    this.name = name;
+    this.gender = "male";
+  }
+}
+
+console.log(Person.surname); // log: Doe
+console.log(Person.name); // log: undefined
+console.log(Person.gender);
+// Property 'gender' does not exist on type 'typeof Person'.
+// its not static nor default property and Person is not instanciated object
+
+const myPerson = new Person("John");
+
+console.log(myPerson.name); // log: John
+console.log(myPerson.gender); // log: "male"
+console.log(myPerson.surname);
+// Property 'surname' does not exist on type 'Person'.
+// Did you mean to access the static member 'Person.surname' instead?
+```
+
+Static members can also use the same public, protected, and private visibility modifiers.
+
+```ts filename="person.ts"
+class Person {
+  private static surname = "Doe";
+
+  // rest of the class
+}
+
+console.log(Person.surname);
+//Property 'surname' is private and only accessible within class 'Person'.
+```
+
+## Abstract
+
+Abstract classes can't be instanciated. They are used as a base class for other classes. Abstract classes can contain abstract methods, which are methods that don't have a body which then are implemented in classes that extend the abstract class.
+
+```ts filename="person.ts"
+abstract class Person {
+  name: string;
+  surname: string;
+
+  constructor(name: string) {
+    this.name = name;
+    this.surname = "Doe";
+  }
+
+  getName() {
+    return this.name;
+  }
+  abstract getFullName(): string;
+}
+
+class John extends Person {
+  getFullName() {
+    return `${this.name} ${this.surname}`;
+  }
+}
+
+const myPerson = new Person("John");
+// Cannot create an instance of an abstract class.
+
+const myJohn = new John("John");
+console.log(myJohn.getFullName()); // log: John Doe
+console.log(myJohn.getName()); // log: John
+```

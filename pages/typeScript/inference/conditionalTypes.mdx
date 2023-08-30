@@ -1,0 +1,225 @@
+# Conditional types
+
+Another way to help typescript to infer types is to use conditional types. We can create conditions, that can based on the conditions infer the type of the variable.
+
+## Basics
+
+In this example, if we provide string as a parameter, the function will return a string with the prefix `Transformed:`. Typescript will infer the type of the variable and pass it as `T` to the conditional type. If the type is not a string, it will return the same type.
+
+```ts filename="conditionalTypes.ts" copy
+type TransformString<T> = T extends string ? `Transformed: ${T}` : T;
+
+function transformValue<T>(value: T): TransformString<T> {
+  if (typeof value === "string") {
+    return `Transformed: ${value}` as TransformString<T>;
+  }
+  return value as TransformString<T>;
+}
+
+const stringResult = transformValue("Hello");
+// stringResult: Transformed: Hello
+
+const numberResult = transformValue(42);
+// numberResult 42
+
+const booleanResult = transformValue(true);
+// booleanResult: true
+```
+
+At first, it might be little confusing, so lets break it down and compare it to regular javaScript function syntax
+
+```ts filename="conditionalTypes.ts" copy
+type TransformString<T> = T extends string ? `Transformed: ${T}` : T;
+// <T> is where we define "arguments"
+// T extends string is where we define condition
+// ? is where we define what to return if condition is true using ternary operator
+
+const regularJsLogic = (val) =>
+  typeof val === "string" ? `Transformed: ${val}` : val;
+// (val) is where we define arguments
+// typeof val === "string" is where we define condition
+// ? is where we define what to return if condition is true using ternary operator
+```
+
+The difference is, that regular javaScript will return `value`, while our conditional type will return `type`, so we can use it in other places. One thing to note here is, that `extends` is not the equivalent of `===` in javaScript. It is more like `instanceof` in javaScript, but this is what we need to use in this example to provide similar functionality.
+
+## Interfaces
+
+It becomes more usefull when we use it with interfaces, so we have some more complex types asiciated with object or class. Lets create two objects, and some function that will treat them differently based on the type of the object.
+
+```ts filename="conditionalTypes.ts" copy
+interface Dog {
+  name: string;
+  age: number;
+}
+
+const dog: Dog = { name: "dog", age: 2 };
+
+interface Cat {
+  name: string;
+  age: number;
+  isEvil: boolean;
+}
+
+const cat: Cat = { name: "cat", age: 2, isEvil: true };
+
+type isLikeADog<T> = T extends Dog ? T : never;
+
+function returnAnimal<T>(animal: T): isLikeADog<T> {
+  return animal as isLikeADog<T>;
+}
+
+const isLikeDog = returnAnimal(dog);
+// isLikeDog: Dog
+const isLikeCat = returnAnimal(cat);
+// isLikeCat: Cat
+
+type isEvilAnimal<T> = T extends Cat ? T : never;
+
+function returnEvilAnimal<T>(animal: T): isEvilAnimal<T> {
+  return animal as isEvilAnimal<T>;
+}
+
+const isEvilDog = returnEvilAnimal(dog);
+// isEvilDog: never
+isEvilDog.isEvil;
+// Property 'isEvil' does not exist on type 'never'
+
+const isEvilCat = returnEvilAnimal(cat);
+// isEvilCat: Cat
+isEvilCat.isEvil;
+// its fine
+```
+
+So in this example, we have to objects that differs only in one property `isEvil`. This way, `Dog` is a subset of `Cat`, so expression `Cat` extends `Dog` will return 'true' but not the other way arround. Lets break it down a little:
+
+When we call `returnAnimal(dog)`, typescript will infer the type of `T` as `Dog`. Then, our conditional type will return `T` type, which is `Dog` in that case, as a return type of the function. It works the same way for `returnAnimal(cat)`, because infered type of argument is `Cat` and that type is subset of `Dog` type.
+
+But its not working like that when we try to check if `Dog` extends `Cat` when we calling `returnEvilAnimal(dog)`, in that case `isEvilAnimal<Dog>` will return `never` type, because `Dog` is not a subset of `Cat`. So we can't access `isEvil` property on `isEvilDog` variable.
+
+## Classes
+
+Lets do that one more time, but this time using classes:
+
+```ts filename="conditionalTypes.ts" copy
+class Animal {
+  name: string;
+  age: number;
+
+  constructor(name: string, age: number) {
+    this.name = name;
+    this.age = age;
+  }
+}
+
+class Dog extends Animal {}
+
+class Cat extends Animal {
+  isEvil: boolean;
+
+  constructor(name: string, age: number, isEvil: boolean) {
+    super(name, age);
+    this.isEvil = isEvil;
+  }
+}
+
+const dog = new Dog("dog", 10);
+const cat = new Cat("cat", 10, true);
+
+function isEvilAnimal(animal: Animal) {
+  return animal instanceof Cat;
+}
+
+const isEvilDog = isEvilAnimal(dog);
+// false
+const isEvilCat = isEvilAnimal(cat);
+// true
+```
+
+Similarly to the previous example, we have two classes that differs only in one property `isEvil`. This way, `Dog` is a subset of `Cat`, so expression `Cat` extends `Dog` will return 'true' but not the other way arround. This time, we dont care about types, we just want to use regular JS `instanceof` operator, to show how it works in this case.
+
+Now, we can finally compare those two `values` and `types` worlds to understand how `extends` keyword wokrs:
+
+```ts filename="conditionalTypes.ts" copy
+type isLikeADog<T> = T extends Dog ? T : never;
+// <T> is where we define "arguments"
+// T extends Dog is where we define condition
+// ? is where we define what to return if condition is true using ternary operator
+
+function isLikeADog(val) {
+  return val instanceof Dog ? val : null;
+}
+// (val) is where we define arguments
+// val instanceof Dog is where we define condition
+// ? is where we define what to return if condition is true using ternary operator
+```
+
+This time, functionality is much more comparable (but still, its `types` vs `values`), but hopefully it will help you to understand how conditional types works.
+
+## Multiple Conditions
+
+Unlike in javaScript, we cannot simply use multiple `if...else` statements to check multiple conditions. But we can use `|` operator:
+
+```ts filename="conditionalTypes.ts" copy
+type isLikeADog<T> = T extends Dog ? T : never;
+type isLikeACat<T> = T extends Cat ? T : never;
+type isLikeADogOrCat<T> = isLikeADog<T> | isLikeACat<T>;
+
+function isLikeADogOrCat<T>(animal: T): isLikeADogOrCat<T> {
+  return animal as isLikeADogOrCat<T>;
+}
+
+const isLikeDog = isLikeADogOrCat(dog);
+// isLikeDog: Dog
+const isLikeCat = isLikeADogOrCat(cat);
+// isLikeCat: Cat
+```
+
+We can also use `&` operator to check if type is a subset of multiple types:
+
+```ts filename="conditionalTypes.ts" copy
+type isLikeADog<T> = T extends Dog ? T : never;
+type isLikeACat<T> = T extends Cat ? T : never;
+type isLikeADogAndCat<T> = isLikeADog<T> & isLikeACat<T>;
+
+function isLikeADogAndCat<T>(animal: T): isLikeADogAndCat<T> {
+  return animal as isLikeADogAndCat<T>;
+}
+
+const isLikeDog = isLikeADogAndCat(dog);
+// isLikeDog: never
+const isLikeCat = isLikeADogAndCat(cat);
+// isLikeCat: Cat
+```
+
+Other way around this problem, is tu use nested ternary operator, but its far less readable. But to undersand that, lets compare it to regular JS syntax again:
+
+```ts filename="conditionalTypes.ts" copy
+type isLikeADogOrCat<T> = T extends Dog ? T : T extends Cat ? T : never;
+
+function isLikeADogOrCat(val) {
+  return val instanceof Dog ? val : val instanceof Cat ? val : null;
+}
+
+// or with if statements
+function isLikeADogOrCat(val) {
+  if (val instanceof Dog) {
+    return val;
+  } else if (val instanceof Cat) {
+    return val;
+  } else {
+    return null;
+  }
+}
+
+// and without else statement
+function isLikeADogOrCat(val) {
+  if (val instanceof Dog) {
+    return val;
+  }
+  if (val instanceof Cat) {
+    return val;
+  }
+  return null;
+}
+```

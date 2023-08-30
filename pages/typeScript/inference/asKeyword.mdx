@@ -1,0 +1,124 @@
+# As Keyword
+
+Using the as keyword, you can 'force' typescript to treat a variable as a specific type. This is useful when you know that a variable is of a certain type, but typescript cant infer it.
+
+## Basics
+
+In following implementation, `typedAnimal` function returns a `Dog | Cat` type. However, we know that the return type is `Cat` because we are passing a `cat: Cat` object to the function. In this case, we can use the `as` keyword to force typescript to treat the return type as `typeof cat` which in this example is `Cat`.
+
+```ts filename="as.ts" copy
+type Dog = {
+  name: string;
+  age: number;
+};
+
+const dog: Dog = {
+  name: "dog",
+  age: 10,
+};
+
+type Cat = {
+  name: string;
+  age: number;
+  isEvil: boolean;
+};
+
+const cat: Cat = {
+  name: "cat",
+  age: 10,
+  isEvil: true,
+};
+
+type Animal = Dog | Cat;
+
+function typedAnimal(animal: Animal) {
+  if ("isEvil" in animal) {
+    return animal;
+  }
+  return animal;
+}
+
+const animal = typedAnimal(cat) as typeof cat;
+// animal: Cat
+```
+
+However, this is not ideal to cast the return type using `as` each time, instead we can use generics to infer the return type.
+
+```ts filename="genericsInsteadOfAs.ts" copy
+type Animal = Dog | Cat;
+
+function typedAnimal<T extends Animal>(animal: T): T {
+  if ("isEvil" in animal) {
+    return animal;
+  }
+  return animal;
+}
+
+const animal = typedAnimal(cat);
+// animal: Cat
+```
+
+import { Callout } from "nextra/components";
+
+<Callout type="error" emoji="️🚫">
+  In most cases you should avoid using `as` keyword, and instead use generics to
+  infer the type, or use other stratiegies to narrow down the type instead of
+  simply telling typescript to treat the value as a specific type.
+</Callout>
+
+## Not compatible types
+
+Sometimes we want to cast some value to a type that is not compatible with the value. Consider the following example:
+
+```ts filename="notCompatible.ts" copy
+type Horse = {
+  name: string;
+  isFast: boolean;
+};
+
+const animal = typedAnimal(dog) as Horse;
+// Conversion of type 'Dog' to type 'Horse' may be a mistake because neither type sufficiently overlaps with the other.
+// If this was intentional, convert the expression to 'unknown' first.
+// Property 'isFast' is missing in type 'Dog' but required in type 'Horse'.
+```
+
+Lets look at another example: we have a fumction, that expect certain type, but we want to pass a different type to it because we know, that the function will work with it.
+
+```ts filename="notCompatible2.ts" copy
+type Dog = {
+  name: string;
+  age: number;
+};
+
+const dog: Dog = {
+  name: "dog",
+  age: 10,
+};
+
+type Horse = {
+  name: string;
+  isFast: boolean;
+};
+
+function typedAnimal(animal: Horse) {
+  return animal.name;
+}
+
+const animal = typedAnimal(dog as Horse);
+// Conversion of type 'Dog' to type 'Horse' may be a mistake because neither type sufficiently overlaps with the other.
+// If this was intentional, convert the expression to 'unknown' first.
+// Property 'isFast' is missing in type 'Dog' but required in type 'Horse'.
+```
+
+We got the same error, but we know that what we want to return from the function is just `animal.name` which is property that both `Dog` and `Horse` have. In this case, we can use `unknown` type to cast the value to it, and then to the type we want.
+
+```ts filename="notCompatible3.ts" copy
+const animal = typedAnimal(dog as unknown as Horse);
+// no error
+```
+
+<Callout type="error" emoji="️🚫">
+  Using `as unknown as` is not a good practice, and should be avoided, as its
+  simply disconnecting typescript from the value, and telling it to treat it as
+  a different type no matter what.
+</Callout>

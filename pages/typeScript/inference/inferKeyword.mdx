@@ -1,0 +1,59 @@
+# Infer Keyword
+
+This keyword allows you to infer the type of something, by showing typescript which part of the code you want to infer the type of.
+
+## Basics
+
+```ts filename="infer.ts" copy
+function add(a: number, b: number): number {
+  return a + b;
+}
+
+type ReturnType<T> = T extends (...args: any[]) => infer R ? R : never;
+type AddReturnType = ReturnType<typeof add>;
+// type AddReturnType = number
+
+type Parameters<T> = T extends (...args: infer R) => any ? R : never;
+type AddArgsType = Parameters<typeof add>;
+// type AddArgsType = [a: number, b: number]
+```
+
+By using the `infer` keyword, we can tell typescript to infer the type of `R` in the given part of the code. Then, you can that `R` generic type to create a new type.
+
+import { Callout } from "nextra/components";
+
+<Callout type="info" emoji="ℹ️">
+  Both `ReturnType` and `Parameters` are built-in types in typescript, so you
+  dont need to implement them yourself.
+</Callout>
+
+## Array Example
+
+```ts filename="inferArray.ts" copy
+const tuple = ["first", "second"] as [string, string];
+const tuple2 = ["first", true] as [string, boolean];
+
+type LastElementOfTuple<T extends any[]> = T extends [...infer R, infer L]
+  ? L
+  : never;
+
+type LastElement = LastElementOfTuple<typeof tuple>;
+// type LastElement = string
+type LastElement2 = LastElementOfTuple<typeof tuple2>;
+// type LastElement2 = boolean
+```
+
+In this example we are using the `infer` keyword to infer the all the elements of the array except the last one, and then anothe `infer` the last element of the array. Then, we checking if `T` extends given array, and if it does, we return type of the last element of the array.
+import { Callout } from "nextra/components";
+
+<Callout emoji="💡">
+    Note, that if you will try to infer last element of non-tupples, you will
+    get `unknown`. This is because typescript cannot infer the type of for
+    example `(string | boolean)[]` because type of such array doesnt provide any
+    information about the last element.
+
+    If you are wondering what about lets say, `string[]`, then still, its
+    unknown due to fact that empty array can also be typed as `string[]`, and
+    typescript doesnt work with runtime values, but with types!
+
+</Callout>

@@ -1,0 +1,76 @@
+# Polymorphism
+
+Mechanism allowing the programmer to use values, variables and methods in several different ways. In other words, it is the ability to abstract expressions from specific types.
+
+## Class Example
+
+```typescript filename="polymorphism.ts"
+class Animal {
+  name: string;
+  constructor(name: string) {
+    this.name = name;
+  }
+  move(distanceInMeters: number = 0) {
+    console.log(`${this.name} moved ${distanceInMeters}m.`);
+  }
+}
+
+class Snake extends Animal {
+  constructor(name: string) {
+    super(name);
+  }
+  move(distanceInMeters = 5) {
+    console.log("Snake is slithering");
+    super.move(distanceInMeters);
+  }
+}
+
+class Horse extends Animal {
+  constructor(name: string) {
+    super(name);
+  }
+  move(distanceInMeters = 45) {
+    console.log("Horse is running");
+    super.move(distanceInMeters);
+  }
+}
+
+const mySnake = new Snake("The Snake");
+const myHorse = new Horse("The Horse");
+
+mySnake.move(); // defaults to 5
+// log: Snake is slithering
+// log: The Snake moved 5m.
+myHorse.move(50);
+// log: Horse is running
+// log: The Horse moved 50m.
+myHorse.move(); // defaults to 45
+// log: Horse is running
+// log: The Horse moved 45m.
+```
+
+This example shows, how the `move` method is implemented in the `Animal` class and how it is overridden in the derived classes.
+
+import { Callout } from "nextra/components";
+
+<Callout emoji="💡">
+  In such example, it might be a good idea to make the `move` method `abstract`
+  in the `Animal` class, so that it must be implemented in the derived classes.
+</Callout>
+
+## Function Example
+
+```typescript filename="polymorphism.ts"
+function logName(name: string): void {
+  console.log(name);
+}
+
+function logName(name: string, surname: string): void {
+  console.log(`${name} ${surname}`);
+}
+
+logName("John"); // log: John
+logName("John", "Doe"); // log: John Doe
+```
+
+This example shows, how the `logName` function is overloaded. Depending on the number of arguments, the function will behave differently. [Read more](/typeScript/functionOverloading)
