@@ -1,4 +1,5 @@
 {
   "useLayoutEffect": "UseLayoutEffect",
-  "useImperativeHandle": "UseImperativeHandle"
+  "useImperativeHandle": "UseImperativeHandle",
+  "useTransition": "UseTransition"
 }

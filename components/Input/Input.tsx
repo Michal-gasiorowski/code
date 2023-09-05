@@ -6,7 +6,7 @@ type InputProps = {
   label: string;
   value?: string;
   onChange?: (e: any) => void;
-  ref: Ref<unknown>;
+  ref?: Ref<unknown>;
 };
 
 export const Input: FC<InputProps> = forwardRef((props, ref) => {

@@ -1,0 +1,222 @@
+# UseTransition
+
+Its a built in hook (React 18 and newer) that allows you to diferentiate between urgent and non urgent (and non blocking at the same time) updates.
+
+## Implementation
+
+This hook returns a tuple, where the first element is `pending` variable, and the second is a `startTransition` function.
+
+```jsx
+const [pending, startTransition] = useTransition();
+```
+
+The `pending` variable is a boolean that indicates if there is a pending transition. The `startTransition` function is used to wrap a piece of code, that will be executed in a non blocking way.
+
+```jsx
+startTransition(() => {
+  // code that will be executed in a non blocking way
+});
+```
+
+## Example
+
+```tsx filename="useTransition.tsx" copy
+const Posts = memo(function PostsTab() {
+  let items = [];
+  for (let i = 0; i < 2000; i++) {
+    items.push(<SlowPost key={i} index={i} />);
+  }
+  return (
+    <div>
+      <p>Posts (hidden for demo purposes)</p>
+      <ul style={{ display: "none" }}>{items}</ul>
+    </div>
+  );
+});
+
+function SlowPost({ index }) {
+  let startTime = performance.now();
+  while (performance.now() - startTime < 1) {
+    // Do nothing for 1 millisecond
+  }
+  return <li className="item">Post #{index + 1}</li>;
+}
+
+export const WithTransition = () => {
+  const [tabToShow, setTabToShow] = useState("one");
+  const [isPending, startTransition] = useTransition();
+
+  const handleClick = (tab) => {
+    console.log(`Switching to tab ${tab}`);
+    startTransition(() => {
+      console.log(`Transitioning to tab ${tab}`);
+      setTabToShow(tab);
+      console.log(`Transitioned to tab ${tab}`);
+    });
+    console.log(`Switched to tab ${tab}`);
+    console.log("-----");
+  };
+
+  return (
+    <div>
+      <Button onClick={() => handleClick("one")} disabled={tabToShow === "one"}>
+        Show tab one
+      </Button>
+      <Button onClick={() => handleClick("two")} disabled={tabToShow === "two"}>
+        Show expensive tab
+      </Button>
+      <Button
+        onClick={() => handleClick("three")}
+        disabled={tabToShow === "three"}
+      >
+        Show tab three
+      </Button>
+      <div>
+        {tabToShow === "one" && <p>Tab one</p>}
+        {tabToShow === "two" && <Posts />}
+        {tabToShow === "three" && <p>Tab three</p>}
+      </div>
+    </div>
+  );
+};
+```
+
+### Demo
+
+import { WithTransition } from "#components/_examples/UseTransition";
+import { AppWrapper } from "#components";
+
+<AppWrapper log>
+  <WithTransition />
+</AppWrapper>
+
+In example above, you can see that `SlowPost` will artificially slow down the rendering of the app. If you click on the `Show expensive tab` button, you will see that the app will not freeze, and you will be able to interact with it. This is because the `startTransition` is wrapping `setTabToShow` function, and it will be executed as _not priority_ task. Even if the state of `tabToShow` is not updated and you still cant see the posts, or the button to be disabled, you can still change tab to another one, because the that state update will be deffered.
+
+Another words, react knows that `setTabToShow` value will change what is rendered on the screen, and it will deffer that change if component that needs to be rendered is not ready yet, due to some expensive computation. At the same time, because we wrapped that inside `startTransition`, we can still interact with the app, to change that state to something else, that will be rendered immediately.
+
+import { Callout } from "nextra/components";
+
+<Callout emoji="💡">
+  Because of how i implemented this _fake_ console in the demo above, you can
+  actualy observe what react is doing under the hood: Once you click on the
+  `Show expensive tab` you will see, that it will log `Switching to tab two` and
+  `Switched to tab two` immediately. Then, when our slow component is ready, it
+  will not log `Transitioning to tab two` and `Transitioned to tab two` as you
+  might expect- instead it replaces whole state of the application, to represent
+  synchronous state change! If you check the actual browser console, you will
+  see the same order of logs, but you will not observe that state change.
+</Callout>
+
+## Pending
+
+Lets try to make use of the `pending` variable, with some really simple example:
+
+```tsx fileName="useTransition.tsx" copy
+// ...
+return (
+  <div>
+    <Button
+      onClick={() => handleClick("one")}
+      disabled={tabToShow === "one" && !isPending}
+    >
+      Show tab one
+    </Button>
+    <Button
+      onClick={() => handleClick("two")}
+      disabled={tabToShow === "two" || isPending}
+    >
+      Show expensive tab
+    </Button>
+    <Button
+      onClick={() => handleClick("three")}
+      disabled={tabToShow === "three" && !isPending}
+    >
+      Show tab three
+    </Button>
+    {isPending && <p>Loading...</p>}
+    {!isPending && (
+      <>
+        {tabToShow === "one" && <p>Tab one</p>}
+        {tabToShow === "two" && <Posts />}
+        {tabToShow === "three" && <p>Tab three</p>}
+      </>
+    )}
+  </div>
+);
+```
+
+### Demo
+
+import { TransitionWithPending } from "#components/_examples/UseTransition";
+
+<AppWrapper log>
+  <TransitionWithPending />
+</AppWrapper>
+
+Now interface seems to be very responsive. You can even observe, how `pending` state will change even with components that renders really fast.
+
+## Without useTransition
+
+In example below, you can check how same component behaves without `useTransition` hook.
+
+```tsx fileName="useTransition.tsx" copy
+//...
+const handleClick = (tab) => {
+  log(`Switching to tab ${tab}`);
+
+  log(`Before setTabToShow(${tab})`);
+  setTabToShow(tab);
+  log(`After setTabToShow(${tab})`);
+
+  log(`Switched to tab ${tab}`);
+  log("-----");
+};
+//...
+```
+
+### Demo
+
+import { WithoutTransition } from "#components/_examples/UseTransition";
+
+<AppWrapper log>
+  <WithoutTransition />
+</AppWrapper>
+
+## vs setTimeout
+
+One more thing to note, is how different `setTimeout` behaves, compared to `useTransition`. Set `setTransition` is not asynchronous task, so our console.logs appear in order as soon as task is executed. `setTimeout` on the other hand, is asynchronous task, so our console.logs inside will appear after the whole `handleClick` function is done, once synchronous queue is empty.
+
+```tsx fileName="useTransition.tsx" copy
+//...
+const handleClick = (tab) => {
+  log(`Switching to tab ${tab}`);
+
+  setTimeout(() => {
+    log(`Timeout begins: ${tab}`);
+    setTabToShow(tab);
+    log(`Timeout ends: ${tab}`);
+    log("-----");
+  }, 0);
+
+  log(`Switched to tab ${tab}`);
+};
+//...
+```
+
+### Demo
+
+import { WithTimeout } from "#components/_examples/UseTransition";
+
+<AppWrapper log>
+  <WithTimeout />
+</AppWrapper>
+
+<Callout emoji="💡">
+  Again, as you can see, `setTimeout` logs appears in different order:
+  `Switching`, `Switched`, `Timeout begins`, `Timeout ends`. If task inside
+  `setTimeout` takes some time, last two logs will appear after that task is
+  done, so after some delay. On the other hand, during `startTransition` logs
+  will appear in order: `Switching`, `Transitioning`, `Transitioned`,
+  `Switched`, as soon as render is ready, so in the end, order of execution is
+  synchronous.
+</Callout>
