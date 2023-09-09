@@ -14,11 +14,15 @@ export const FancyInputParent = () => {
 export const Parent = () => {
   const childRef = useRef(null);
 
-  const log = childRef.current?.console || (() => {});
+  const handleClick = () => {
+    const log = childRef.current?.console;
+    log && log();
+  };
+
   return (
     <>
       <Child ref={childRef} />
-      <Button onClick={() => log()}>Call child method</Button>
+      <Button onClick={handleClick}>Call child method</Button>
     </>
   );
 };

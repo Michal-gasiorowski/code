@@ -2,5 +2,6 @@
   "advancedHooks": "Advanced Hooks",
   "componentLifecycle": "Component Lifecycle",
   "compoundComponents": "Compound Components",
-  "stateUpdateBatching": "State Update Batching"
+  "stateUpdateBatching": "State Update Batching",
+  "webWorkers": "WebWorkers"
 }

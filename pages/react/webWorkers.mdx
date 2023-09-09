@@ -1,0 +1,110 @@
+# WebWorkers
+
+WebWorker is a JavaScript API that allows you to run scripts in a separate thread from the main thread. This means that you can run multiple WebWorkers in separate threads at the same time.
+
+Example use case for WebWorkers is when you have some heavy computation that you want to run in background, without blocking UI.
+
+## Implementation
+
+### WebWorker file
+
+```ts filename="webWorker.ts" copy
+import api from "./api";
+
+self.onmessage = function (e) {
+  console.log("Webworker: Message received from main script");
+  console.log("Webworker: Posting message back to main script");
+  self.postMessage(
+    `Webworker: sum of all array items is ${api.addArrayItems(e.data)}`
+  );
+  console.log("Webworker: log after post message");
+};
+
+export {};
+```
+
+here is example implementation of api file, that particular webworker uses
+
+```ts filename="api.ts" copy
+const api = {
+  addArrayItems: (array: number[]) => {
+    return array.reduce((a, b) => a + b, 0);
+  },
+};
+
+export default api;
+```
+
+### React
+
+```tsx filename="Parent.tsx" copy
+import { AppWrapper, Button } from "#components";
+import { useEffect, useMemo } from "react";
+
+export function ParentComponent() {
+  const workerInstance = useMemo(() => {
+    if (typeof window !== "undefined")
+      return new Worker(new URL("./webWorker.ts", import.meta.url));
+  }, []);
+
+  useEffect(() => {
+    workerInstance.onmessage = (e) => {
+      console.log("App: Message received from worker");
+      console.log(e.data);
+    };
+
+    return () => {
+      if (workerInstance) workerInstance.terminate();
+    };
+  }, [workerInstance]);
+
+  const handleLog = (e: string) => {
+    return null;
+  };
+
+  const handleClick = () => {
+    console.log("App: Sending message to worker");
+    workerInstance.postMessage([1, 3, 5]);
+  };
+
+  return (
+    <div>
+      <Button onClick={handleClick}>Post array to worker!</Button>
+    </div>
+  );
+}
+```
+
+## Demo
+
+import { ParentComponent } from "#components/_examples/WebWorkers/Parent";
+import { AppWrapper } from "#components";
+
+<AppWrapper log>
+  <ParentComponent />
+</AppWrapper>
+
+import { Callout } from "nextra/components";
+
+<Callout emoji="💡">
+  If you open browser console, you will see that log `log after post message`
+  from webworker is logged before `App: Message received from worker` from main
+  thread. This is because webworker is running in separate thread, so its not
+  serrialized with main thread.
+</Callout>
+
+## WebWorker vs SetTimeout
+
+### WebWorker
+
+- **Concurency**: WebWorkers are running in separate thread, so they are not blocking main thread, which is responsible for rendering UI. This means that you can run multiple WebWorkers in separate threads at the same time, without blocking UI.
+- **Isolation**: WebWorkers run in separate context, so they don't have access to DOM, window, document, etc. This means that you can't use DOM API inside WebWorker, but you can use it in main thread.
+- **Communication**: WebWorkers communicate with the main thread through a message-passing system, which is asynchronous. They can send and receive data, making them suitable for tasks like background computation.
+- **Setup**: WebWorkers require some setup, compared to setTimeout, which is built-in browser API.
+
+### SetTimeout
+
+- **Concurency**: setTimeout does not provide true multi-threading. It schedules a function to run on the main thread's event loop, but it will be executed after the current call stack is empty. It won't run in parallel with other JavaScript code.
+- **Isolation**: setTimeout runs in the same context as the rest of your code, so it has access to the DOM, window, document, etc. This means that you can use DOM API inside setTimeout.
+- **Communication**: setTimeout does not provide a way to communicate with the main thread, it will in fact run on the main thread once the current call stack is empty.
+- **Setup**: setTimeout is built-in browser API, so it does not require any setup.

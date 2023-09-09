@@ -37,15 +37,18 @@ This hook is used to expose certain methods or properties of a component to its 
 ```tsx filename="useImperativeHandle.tsx" copy
 import { FC, forwardRef, useImperativeHandle, useRef } from "react";
 
-const Parent = () => {
+export const Parent = () => {
   const childRef = useRef(null);
-  const log = childRef.current?.console || (() => {});
-  //simple implementation, to avoid errors if the method is not defined
+
+  const handleClick = () => {
+    const log = childRef.current?.console;
+    log && log();
+  };
 
   return (
     <>
       <Child ref={childRef} />
-      <button onClick={() => childRef.current.log()}>Call child method</button>
+      <Button onClick={handleClick}>Call child method</Button>
     </>
   );
 };
